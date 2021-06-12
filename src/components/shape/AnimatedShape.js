@@ -7,7 +7,6 @@ import React, {
   useState,
 } from 'react';
 import { Animated, PanResponder, useWindowDimensions } from 'react-native';
-import { PanGestureHandler } from 'react-native-gesture-handler';
 import { useShapeContext } from '../../state/shape';
 
 let lastPress = 0;
@@ -104,20 +103,16 @@ export default function AnimatedShape({ children, style, shape, parentType }) {
   // scale = useRef(new Animated.Value(1)).current;
 
   return (
-    <PanGestureHandler
-      onGestureEvent={this.onPinchEvent}
-      onHandlerStateChange={this.onPinchStateChange}>
-      <Animated.View
-        {...panResponder.panHandlers}
-        style={[
-          {
-            opacity: fadeAnim,
-            ...style,
-          },
-          position,
-        ]}>
-        {children}
-      </Animated.View>
-    </PanGestureHandler>
+    <Animated.View
+      {...panResponder.panHandlers}
+      style={[
+        {
+          opacity: fadeAnim,
+          ...style,
+        },
+        position,
+      ]}>
+      {children}
+    </Animated.View>
   );
 }
