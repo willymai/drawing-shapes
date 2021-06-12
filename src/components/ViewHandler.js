@@ -8,12 +8,14 @@ export default function ViewHandler({ children, onTap }) {
     const y = e.nativeEvent.pageY;
     onTap({ x, y });
   };
+
   return (
     <View
       onStartShouldSetResponder={() => true}
       onResponderRelease={handleTap}
       style={{
         flex: 1,
+        position: 'relative',
       }}>
       {children}
     </View>

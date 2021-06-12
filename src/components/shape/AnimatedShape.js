@@ -12,77 +12,71 @@ import { useShapeContext } from '../../state/shape';
 
 const delay = 300;
 const radius = 20;
+let lastPress = 0;
+
+const DOUBLE_PRESS_DELAY = 400;
 
 export default function AnimatedShape({ children, style, shape, parentType }) {
-  const { onDoubleTapShape } = useShapeContext();
+  const { onDoubleTapShape, shapes } = useShapeContext();
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
-  const [prevTouchInfo, setPrevTouchInfo] = useState({
-    prevTouchX: 0,
-    prevTouchY: 0,
-    prevTouchTimeStamp: 0,
+  const [lastOffset, setLastOffset] = useState({
+    offsetX: 0,
+    offsetY: 0,
   });
 
-  const panResponder = useMemo(
-    () =>
-      PanResponder.create({
-        onStartShouldSetPanResponder: evt => true,
-        onPanResponderTerminationRequest: evt => true,
-        onShouldBlockNativeResponder: evt => false,
-        onPanResponderGrant: handlePanResponderGrant,
-        onPanResponderMove: (e, gesture) => {
-          console.log('move', {
-            x: gesture.dx,
-            y: gesture.dy,
-          });
-        },
-        onPanResponderRelease: () => {},
-      }),
-    [],
-  );
+  const [lastPosition, setLastPosition] = useState({
+    lastX: 0,
+    lastY: 0,
+  });
 
   useEffect(() => {
     fadeIn();
   }, []);
 
-  const distance = (x0, y0, x1, y1) => {
-    return Math.sqrt(Math.pow(x1 - x0, 2) + Math.pow(y1 - y0, 2));
-  };
+  const pan = useRef(new Animated.ValueXY()).current;
 
-  const isDoubleTap = (currentTouchTimeStamp, { x0, y0 }) => {
-    const { prevTouchX, prevTouchY, prevTouchTimeStamp } = prevTouchInfo;
-    const dt = currentTouchTimeStamp - prevTouchTimeStamp;
+  const panResponder = useMemo(
+    () =>
+      PanResponder.create({
+        onStartShouldSetPanResponder: (evt, gestureState) => {
+          return true;
+        },
+        onStartShouldSetPanResponderCapture: (evt, gestureState) => true,
+        onMoveShouldSetPanResponder: (evt, gestureState) => true,
+        onMoveShouldSetPanResponderCapture: (evt, gestureState) => true,
+        onPanResponderGrant: (e, gestureState) => {
+          pan.setOffset({
+            x: pan.x._value,
+            y: pan.y._value,
+          });
+        },
+        // onPanResponderMove: Animated.event([null, { dx: pan.x, dy: pan.y }]),
+        onPanResponderRelease: () => {
+          pan.flattenOffset();
+          const time = new Date().getTime();
+          const delta = time - lastPress;
 
-    return dt < delay && distance(prevTouchX, prevTouchY, x0, y0) < radius;
-  };
-
-  const handlePanResponderGrant = (evt, gestureState) => {
-    // console.log('regrant');
-    const currentTouchTimeStamp = Date.now();
-    if (isDoubleTap(currentTouchTimeStamp, gestureState)) {
-      console.log('double tap');
-    }
-    //   pan.setOffset({
-    //     x: pan.x._value,
-    //     y: pan.y._value,
-    //   });
-    // }
-    setPrevTouchInfo({
-      prevTouchX: gestureState.x0,
-      prevTouchY: gestureState.y0,
-      prevTouchTimeStamp: currentTouchTimeStamp,
-    });
-  };
+          if (delta < DOUBLE_PRESS_DELAY) {
+            onDoubleTapShape({ id: shape.id, type: parentType });
+          } else {
+            lastPress = time;
+          }
+          return true;
+        },
+        // onShouldBlockNativeResponder: () => true,
+      }),
+    [shapes],
+  );
 
   const fadeIn = useCallback(() => {
     Animated.timing(fadeAnim, {
       toValue: 1,
       duration: 300,
-      // useNativeDriver: true,
+      useNativeDriver: true,
     }).start();
   }, [fadeAnim]);
 
-  // console.log('position.getLayout()', position.getLayout());
   const onHandlerStateChange = event => {
     if (event.nativeEvent.state === State.ACTIVE) {
       onDoubleTapShape({ id: shape.id, type: parentType });
@@ -90,19 +84,22 @@ export default function AnimatedShape({ children, style, shape, parentType }) {
   };
 
   return (
-    <TapGestureHandler
-      numberOfTaps={2}
-      onHandlerStateChange={onHandlerStateChange}>
-      <Animated.View
-        {...panResponder.panHandlers}
-        style={[
-          {
-            opacity: fadeAnim,
-            ...style,
-          },
-        ]}>
-        {children}
-      </Animated.View>
-    </TapGestureHandler>
+    // <TapGestureHandler
+    //   numberOfTaps={2}
+    //   onHandlerStateChange={onHandlerStateChange}>
+    <Animated.View
+      {...panResponder.panHandlers}
+      style={[
+        {
+          opacity: fadeAnim,
+          ...style,
+        },
+        {
+          transform: [{ translateX: pan.x }, { translateY: pan.y }],
+        },
+      ]}>
+      {children}
+    </Animated.View>
+    // </TapGestureHandler>
   );
 }

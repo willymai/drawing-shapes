@@ -135,6 +135,7 @@ export function ShapeProvider({ children }) {
 
   const onDoubleTapShape = async ({ id, type }) => {
     const listShapes = [...shapes[type]];
+    console.log('oldlistShapes', listShapes.length);
     const index = listShapes.findIndex(item => item.id === id);
     if (index === -1) {
       return;
@@ -161,7 +162,7 @@ export function ShapeProvider({ children }) {
     }
 
     listShapes[index] = shape;
-
+    console.log('listShapes', listShapes.length);
     setShapes({
       ...shapes,
       [type]: listShapes,

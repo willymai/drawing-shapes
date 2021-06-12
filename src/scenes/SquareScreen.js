@@ -1,4 +1,6 @@
 import React, { useMemo } from 'react';
+import { useEffect } from 'react';
+import { View } from 'react-native';
 import ShapeTypes from '../common/ShapeTypes';
 import Square from '../components/shape/Square';
 import ViewHandler from '../components/ViewHandler';
