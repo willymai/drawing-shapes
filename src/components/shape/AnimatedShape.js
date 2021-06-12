@@ -6,16 +6,32 @@ import React, {
   useMemo,
   useState,
 } from 'react';
-import { Animated, PanResponder, useWindowDimensions } from 'react-native';
+import { Animated, Dimensions, PanResponder } from 'react-native';
 import { useShapeContext } from '../../state/shape';
 
 let lastPress = 0;
 
 const DOUBLE_PRESS_DELAY = 300;
 
+const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+
+const maxShapeSize = Math.round((screenWidth * 45) / 100);
+
+const minShapeSize = Math.round((screenWidth * 10) / 100);
+
+function calculateHypotenuse([point1, point2]) {
+  const angleX = Math.abs(point1.pageX - point2.pageX);
+
+  const angleY = Math.abs(point1.pageY - point2.pageY);
+
+  const hypotenuse = Math.sqrt(angleX * angleX + angleY * angleY);
+
+  return hypotenuse;
+}
+
 export default function AnimatedShape({ children, style, shape, parentType }) {
   const { onDoubleTapShape, shapes } = useShapeContext();
-  const { width: screenWidth, height: screenHeight } = useWindowDimensions();
+
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
   const [position, setPosition] = useState({
@@ -23,11 +39,15 @@ export default function AnimatedShape({ children, style, shape, parentType }) {
     top: style.top,
   });
 
+  const [scale, setScale] = useState(1);
+
   useEffect(() => {
     fadeIn();
   }, []);
 
   const isDragging = useRef(false);
+
+  const hypotenuse = useRef(Math.sqrt(2 * shape.size * shape.size));
 
   const panResponder = useMemo(
     () =>
@@ -41,6 +61,11 @@ export default function AnimatedShape({ children, style, shape, parentType }) {
         },
         onMoveShouldSetPanResponderCapture: (evt, gestureState) => true,
         onPanResponderGrant: (e, gestureState) => {
+          if (gestureState.numberActiveTouches === 2) {
+            const newHypotenuse = calculateHypotenuse(e.nativeEvent.touches);
+            hypotenuse.current = newHypotenuse;
+          }
+
           const time = new Date().getTime();
 
           const delta = time - lastPress;
@@ -64,32 +89,50 @@ export default function AnimatedShape({ children, style, shape, parentType }) {
         //   useNativeDriver: false,
         // }),
         onPanResponderMove: (e, gestureState) => {
-          let newLeft = position.left + gestureState.dx;
-          let newTop = position.top + gestureState.dy;
-          if (newLeft < 0) {
-            newLeft = 0;
-          } else if (newLeft + shape.size >= screenWidth) {
-            newLeft = screenWidth - shape.size;
-          }
+          if (gestureState.numberActiveTouches === 2) {
+            const newHypotenuse = calculateHypotenuse(e.nativeEvent.touches);
 
-          if (newTop < 0) {
-            newTop = 0;
-          } else if (newTop + shape.size >= screenHeight) {
-            newTop = screenHeight - shape.size;
-          }
+            let newScale = (newHypotenuse / hypotenuse.current) * scale;
 
-          setPosition({
-            left: newLeft,
-            top: newTop,
-          });
+            // check maxScale and minScale
+            if (newScale * shape.size >= maxShapeSize) {
+              newScale = maxShapeSize / shape.size;
+            } else if (newScale * shape.size <= minShapeSize) {
+              newScale = minShapeSize / shape.size;
+            }
+
+            setScale(newScale);
+          } else if (gestureState.numberActiveTouches === 1) {
+            const changeSize = (shape.size * (scale - 1)) / 2;
+
+            let newLeft = position.left + gestureState.dx;
+
+            let newTop = position.top + gestureState.dy;
+
+            if (newLeft < changeSize) {
+              newLeft = changeSize;
+            } else if (newLeft + shape.size + changeSize >= screenWidth) {
+              newLeft = screenWidth - shape.size - changeSize;
+            }
+
+            if (newTop < changeSize) {
+              newTop = changeSize;
+            } else if (newTop + shape.size + changeSize >= screenHeight) {
+              newTop = screenHeight - shape.size - changeSize;
+            }
+
+            setPosition({
+              left: newLeft,
+              top: newTop,
+            });
+          }
         },
         onPanResponderRelease: (e, gesture) => {
-          console.log('release');
           return true;
         },
         onShouldBlockNativeResponder: () => true,
       }),
-    [shapes, position],
+    [shapes, position, scale],
   );
 
   const fadeIn = useCallback(() => {
@@ -100,8 +143,6 @@ export default function AnimatedShape({ children, style, shape, parentType }) {
     }).start();
   }, [fadeAnim]);
 
-  // scale = useRef(new Animated.Value(1)).current;
-
   return (
     <Animated.View
       {...panResponder.panHandlers}
@@ -111,6 +152,16 @@ export default function AnimatedShape({ children, style, shape, parentType }) {
           ...style,
         },
         position,
+        {
+          transform: [
+            {
+              scaleX: scale,
+            },
+            {
+              scaleY: scale,
+            },
+          ],
+        },
       ]}>
       {children}
     </Animated.View>
