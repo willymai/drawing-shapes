@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import React, {
   useRef,
   useEffect,
@@ -22,7 +23,7 @@ export default function AnimatedShape({ children, style, shape, parentType }) {
     prevTouchTimeStamp: 0,
   });
 
-  const panResponder = React.useMemo(
+  const panResponder = useMemo(
     () =>
       PanResponder.create({
         onStartShouldSetPanResponder: evt => true,
@@ -42,7 +43,6 @@ export default function AnimatedShape({ children, style, shape, parentType }) {
 
   useEffect(() => {
     fadeIn();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const distance = (x0, y0, x1, y1) => {

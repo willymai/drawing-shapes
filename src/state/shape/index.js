@@ -2,7 +2,11 @@ import React from 'react';
 import { createContext, useContext, useState, useEffect } from 'react';
 import shortid from 'shortid';
 import ShapeTypes from '../../common/ShapeTypes';
-import { randomHexColor, randomeSize, randomShape } from '../../utils/random';
+import {
+  randomHexColor,
+  getShapeSize,
+  randomShape,
+} from '../../utils/shapeUtils';
 
 const context = createContext({
   shapes: {
@@ -27,41 +31,73 @@ export function ShapeProvider({ children }) {
 
   const [fetchedImages, setFetchedImages] = useState(false);
 
+  const fetchColors = async () => {
+    const response = await fetch(
+      'http://www.colourlovers.com/api/colors/random?format=json',
+      {
+        method: 'GET',
+      },
+    );
+    const data = await response.json();
+    setListColors(data);
+    setFetchedColors(true);
+    return data;
+  };
+
+  const fetchImages = async () => {
+    const response = await fetch(
+      'http://www.colourlovers.com/api/patterns/random?format=json',
+      {
+        method: 'GET',
+      },
+    );
+    const data = await response.json();
+    setListImages(data);
+    setFetchedImages(true);
+    return data;
+  };
+
   useEffect(() => {
-    const fetchColors = async () => {
-      const response = await fetch(
-        'http://www.colourlovers.com/api/colors/random?format=json',
-        {
-          method: 'GET',
-        },
-      );
-      const data = await response.json();
-      setListColors(data);
-      setFetchedColors(true);
-    };
-
-    const fetchImages = async () => {
-      const response = await fetch(
-        'http://www.colourlovers.com/api/patterns/random?format=json',
-        {
-          method: 'GET',
-        },
-      );
-      const data = await response.json();
-      setListImages(data);
-      setFetchedImages(true);
-    };
-
     fetchColors();
     fetchImages();
   }, []);
 
+  const getColor = async () => {
+    try {
+      const data = await fetchColors();
+      return {
+        bgColor: `#${data[0].hex}` || `#${randomHexColor()}`,
+      };
+    } catch (error) {
+      return {
+        bgColor: `#${randomHexColor()}`,
+      };
+    }
+  };
+
+  const getImage = async () => {
+    try {
+      const data = await fetchImages();
+      return {
+        imageUrl: data[0].imageUrl,
+      };
+    } catch (error) {
+      return {
+        imageUrl: '',
+        bgColor: `#${randomHexColor()}`,
+      };
+    }
+  };
+
   const onAddNewShape = ({ type, data }) => {
     const currentListShapes = shapes[type] || [];
+    const { size, x, y } = getShapeSize({ x: data.x, y: data.y });
     const newShape = {
       id: shortid.generate(),
       ...data,
-      size: randomeSize({ x: data.x, y: data.y }),
+      x,
+      y,
+      size: size,
       bgColor: `#${randomHexColor()}`,
     };
 
@@ -89,13 +125,35 @@ export function ShapeProvider({ children }) {
     });
   };
 
-  const onDoubleTapShape = ({ id, type }) => {
-    console.log('id, type', id, type);
+  const onDoubleTapShape = async ({ id, type }) => {
     const listShapes = [...shapes[type]];
     const index = listShapes.findIndex(item => item.id === id);
-    if (index !== -1) {
-      listShapes[index].bgColor = `#${randomHexColor()}`;
+    if (index === -1) {
+      return;
     }
+    let shape = listShapes[index];
+    if (shape.type === ShapeTypes.Triangle) {
+      shape = {
+        ...shape,
+        bgColor: `#${randomHexColor()}`,
+      };
+    } else if (shape.type === ShapeTypes.Square) {
+      const data = await getImage();
+      shape = {
+        ...shape,
+        bgColor: `#${randomHexColor()}`,
+        ...data,
+      };
+    } else if (shape.type === ShapeTypes.Circle) {
+      const data = await getColor();
+      shape = {
+        ...shape,
+        ...data,
+      };
+    }
+
+    listShapes[index] = shape;
+
     setShapes({
       ...shapes,
       [type]: listShapes,

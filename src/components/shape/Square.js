@@ -17,7 +17,13 @@ export default function Square({ shape, parentType }) {
         height: size,
         backgroundColor: bgColor,
       }}>
-      <Image source={{ uri: imageUrl }} style={{ width: size, height: size }} />
+      {imageUrl && (
+        <Image
+          key={imageUrl}
+          source={{ uri: imageUrl }}
+          style={{ width: size, height: size }}
+        />
+      )}
     </AnimatedShape>
   );
 }

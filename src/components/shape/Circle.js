@@ -1,6 +1,5 @@
 /* eslint-disable react-native/no-inline-styles */
 import React from 'react';
-import { View } from 'react-native';
 import AnimatedShape from './AnimatedShape';
 
 export default function Circle({ shape, parentType }) {
