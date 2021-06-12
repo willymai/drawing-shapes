@@ -6,7 +6,7 @@ import React, {
   useMemo,
   useState,
 } from 'react';
-import { Animated, PanResponder } from 'react-native';
+import { Animated, PanResponder, useWindowDimensions } from 'react-native';
 import { PanGestureHandler } from 'react-native-gesture-handler';
 import { useShapeContext } from '../../state/shape';
 
@@ -16,6 +16,7 @@ const DOUBLE_PRESS_DELAY = 300;
 
 export default function AnimatedShape({ children, style, shape, parentType }) {
   const { onDoubleTapShape, shapes } = useShapeContext();
+  const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
   const [position, setPosition] = useState({
@@ -42,6 +43,7 @@ export default function AnimatedShape({ children, style, shape, parentType }) {
         onMoveShouldSetPanResponderCapture: (evt, gestureState) => true,
         onPanResponderGrant: (e, gestureState) => {
           const time = new Date().getTime();
+
           const delta = time - lastPress;
 
           if (delta < DOUBLE_PRESS_DELAY) {
@@ -63,13 +65,23 @@ export default function AnimatedShape({ children, style, shape, parentType }) {
         //   useNativeDriver: false,
         // }),
         onPanResponderMove: (e, gestureState) => {
-          console.log(
-            'gestureState.numberActiveTouches',
-            gestureState.numberActiveTouches,
-          );
+          let newLeft = position.left + gestureState.dx;
+          let newTop = position.top + gestureState.dy;
+          if (newLeft < 0) {
+            newLeft = 0;
+          } else if (newLeft + shape.size >= screenWidth) {
+            newLeft = screenWidth - shape.size;
+          }
+
+          if (newTop < 0) {
+            newTop = 0;
+          } else if (newTop + shape.size >= screenHeight) {
+            newTop = screenHeight - shape.size;
+          }
+
           setPosition({
-            left: position.left + gestureState.dx,
-            top: position.top + gestureState.dy,
+            left: newLeft,
+            top: newTop,
           });
         },
         onPanResponderRelease: (e, gesture) => {

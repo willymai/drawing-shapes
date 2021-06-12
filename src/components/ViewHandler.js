@@ -4,24 +4,24 @@ import { PanResponder, View } from 'react-native';
 import { useShapeContext } from '../state/shape';
 
 export default function ViewHandler({ children, onTap }) {
-  const { shapes } = useShapeContext();
+  // const { shapes } = useShapeContext();
   const handleTap = e => {
     const x = e.nativeEvent.pageX;
     const y = e.nativeEvent.pageY;
     onTap({ x, y });
   };
 
-  const pan = useMemo(
-    () =>
-      PanResponder.create({
-        onStartShouldSetPanResponder: () => true,
-        onPanResponderRelease: e => {
-          console.log('onPanResponderRelease');
-          handleTap(e);
-        },
-      }),
-    [shapes],
-  );
+  // const pan = useMemo(
+  //   () =>
+  //     PanResponder.create({
+  //       onStartShouldSetPanResponder: () => true,
+  //       onPanResponderRelease: e => {
+  //         console.log('onPanResponderRelease');
+  //         handleTap(e);
+  //       },
+  //     }),
+  //   [shapes],
+  // );
 
   return (
     <View
