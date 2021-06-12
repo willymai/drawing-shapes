@@ -7,6 +7,7 @@ import React, {
   useState,
 } from 'react';
 import { Animated, PanResponder } from 'react-native';
+import { PanGestureHandler } from 'react-native-gesture-handler';
 import { useShapeContext } from '../../state/shape';
 
 let lastPress = 0;
@@ -35,7 +36,9 @@ export default function AnimatedShape({ children, style, shape, parentType }) {
           return true;
         },
         onStartShouldSetPanResponderCapture: (evt, gestureState) => true,
-        onMoveShouldSetPanResponder: (evt, gestureState) => true,
+        onMoveShouldSetPanResponder: (evt, gestureState) => {
+          return true;
+        },
         onMoveShouldSetPanResponderCapture: (evt, gestureState) => true,
         onPanResponderGrant: (e, gestureState) => {
           const time = new Date().getTime();
@@ -49,22 +52,31 @@ export default function AnimatedShape({ children, style, shape, parentType }) {
             isDragging.current = true;
           }
         },
-        // onPanResponderMove: Animated.event([null, { dx: pan.x, dy: pan.y }]),
-        onPanResponderMove: Animated.event([], {
-          listener: (e, gestureState) => {
-            setPosition({
-              left: position.left + gestureState.dx,
-              top: position.top + gestureState.dy,
-            });
-          },
-          useNativeDriver: false,
-        }),
+        // onPanResponderMove: Animated.event([], {
+        //   listener: (e, gestureState) => {
+        //     console.log('number', gestureState.numberActiveTouches);
+        //     setPosition({
+        //       left: position.left + gestureState.dx,
+        //       top: position.top + gestureState.dy,
+        //     });
+        //   },
+        //   useNativeDriver: false,
+        // }),
+        onPanResponderMove: (e, gestureState) => {
+          console.log(
+            'gestureState.numberActiveTouches',
+            gestureState.numberActiveTouches,
+          );
+          setPosition({
+            left: position.left + gestureState.dx,
+            top: position.top + gestureState.dy,
+          });
+        },
         onPanResponderRelease: (e, gesture) => {
           console.log('release');
-
           return true;
         },
-        // onShouldBlockNativeResponder: () => true,
+        onShouldBlockNativeResponder: () => true,
       }),
     [shapes, position],
   );
@@ -77,17 +89,23 @@ export default function AnimatedShape({ children, style, shape, parentType }) {
     }).start();
   }, [fadeAnim]);
 
+  // scale = useRef(new Animated.Value(1)).current;
+
   return (
-    <Animated.View
-      {...panResponder.panHandlers}
-      style={[
-        {
-          opacity: fadeAnim,
-          ...style,
-        },
-        position,
-      ]}>
-      {children}
-    </Animated.View>
+    <PanGestureHandler
+      onGestureEvent={this.onPinchEvent}
+      onHandlerStateChange={this.onPinchStateChange}>
+      <Animated.View
+        {...panResponder.panHandlers}
+        style={[
+          {
+            opacity: fadeAnim,
+            ...style,
+          },
+          position,
+        ]}>
+        {children}
+      </Animated.View>
+    </PanGestureHandler>
   );
 }

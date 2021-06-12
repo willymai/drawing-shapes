@@ -4,6 +4,7 @@ import AnimatedShape from './AnimatedShape';
 
 export default function Triangle({ shape, parentType }) {
   const { size, x, y, bgColor } = shape;
+
   return (
     <AnimatedShape
       shape={shape}
