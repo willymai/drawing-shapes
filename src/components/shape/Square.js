@@ -5,6 +5,7 @@ import AnimatedShape from './AnimatedShape';
 
 export default function Square({ shape, parentType }) {
   const { size, x, y, bgColor, imageUrl } = shape;
+
   return (
     <AnimatedShape
       shape={shape}

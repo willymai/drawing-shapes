@@ -19,6 +19,7 @@
     "react-native-reanimated": "^2.2.0",
     "react-native-safe-area-context": "^3.2.0",
     "react-native-screens": "^3.3.0",
+    "react-native-shake": "^4.0.2",
     "shortid": "^2.2.16"
   },
   "devDependencies": {

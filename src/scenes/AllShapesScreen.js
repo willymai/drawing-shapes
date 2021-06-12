@@ -5,16 +5,18 @@ import Square from '../components/shape/Square';
 import Triangle from '../components/shape/Triangle';
 import ViewHandler from '../components/ViewHandler';
 import { useShapeContext } from '../state/shape';
-
 export default function AllShapesScreen() {
   const { shapes, onAddNewShape } = useShapeContext();
+
   const listShapes = useMemo(() => shapes[ShapeTypes.All] || [], [shapes]);
+
   const handleTap = position => {
     onAddNewShape({
       type: ShapeTypes.All,
       data: { ...position },
     });
   };
+
   return (
     <ViewHandler onTap={handleTap}>
       {listShapes.map((shape, index) => {

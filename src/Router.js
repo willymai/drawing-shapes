@@ -35,7 +35,6 @@ export default function Router() {
         <Tab.Screen name="Triangle" component={TriangleScreen} />
         <Tab.Screen name="All" component={AllShapesScreen} />
       </Tab.Navigator>
-      {/* <View></View> */}
     </NavigationContainer>
   );
 }

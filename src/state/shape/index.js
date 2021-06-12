@@ -1,6 +1,7 @@
 import React from 'react';
 import { createContext, useContext, useState, useEffect } from 'react';
 import shortid from 'shortid';
+import RNShake from 'react-native-shake';
 import ShapeTypes from '../../common/ShapeTypes';
 import {
   randomHexColor,
@@ -60,6 +61,13 @@ export function ShapeProvider({ children }) {
   useEffect(() => {
     fetchColors();
     fetchImages();
+
+    RNShake.addListener(() => {
+      setShapes({});
+    });
+    return () => {
+      RNShake.removeListener();
+    };
   }, []);
 
   const getColor = async () => {
